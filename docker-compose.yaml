@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+    hub_webserver:
+        build: .  # use the dockerfile in the same dir
+        image: hug_swarm:latest
+        deploy:
+            replicas: 2
+            restart_policy:
+                condition: on-failure
+            ports:
+                published:2005, target=3003  
+                # this exposes port 2005 on the host and routes the traffic to port 3003 inside the containers
+                
+
+networks:
+    default:
+        driver: overlay
+        # for all swarm "overlay" network is recommended (mandatory if multiple node setup)
