@@ -1,19 +1,18 @@
-version: "3.7"
 
 services:
-    hub_webserver:
-        build: .  # use the dockerfile in the same dir
-        image: hug_swarm:latest
-        deploy:
-            replicas: 2
-            restart_policy:
-                condition: on-failure
-            ports:
-                published:2005, target=3003  
-                # this exposes port 2005 on the host and routes the traffic to port 3003 inside the containers
+    fastapi_1:
+        build: # use the dockerfile in the same dir
+            context: .
+            dockerfile: Dockerfile 
+        image: fastapi_webserver:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        ports: 
+            - "2001:3003"  
+    fastapi_2:
+        build: # use the dockerfile in the same dir
+            context: .
+            dockerfile: Dockerfile 
+        image: fastapi_webserver:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        ports: 
+            - "2002:3003"  
                 
-
-networks:
-    default:
-        driver: overlay
-        # for all swarm "overlay" network is recommended (mandatory if multiple node setup)
+        
