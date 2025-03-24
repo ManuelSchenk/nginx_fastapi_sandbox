@@ -23,7 +23,7 @@ sudo htpasswd -c /etc/nginx/.htpasswd cse2lr
 # How to use
 
 1) adapt the `nginx.conf` file according your needs
-2) build the images with `docker compose build`
+2) build the images with `docker compose -f docker-compose_remote_worker.yaml build`
 3) run the `docker-compose.yaml` with **SWARM** using `docker stack deploy -c docker-compose.yaml myswarm`
 4) check the stack
 ```bash
