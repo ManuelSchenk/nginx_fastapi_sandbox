@@ -1,18 +1,53 @@
 
 services:
-    fastapi_1:
+    fastapi_swarm:
         build: # use the dockerfile in the same dir
             context: .
             dockerfile: Dockerfile 
-        image: fastapi_webserver:latest  # tells Docker Compose what to name (tag) the image after it’s built.
-        ports: 
-            - "2001:3003"  
-    fastapi_2:
+        image: fastapi_swarm:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        deploy:
+            replicas: 2
+            restart_policy:
+                condition: on-failure
+        environment:
+            - INSTANCE_NAME=fastapi_swarm 
+        expose:
+            - "3003" # this is used when nginx is a container in the same docker network, if not use the ports below
+        # the following would exposes the port 2002 on the host (if a local nginx should be used) and routes the traffic to port 3003 inside the containers
+        # ports:
+        #     - published: 2002
+        #       target: 3003
+        #       protocol: tcp
+            # mode: host = bypasses the routing mesh and binds the container port directly to the host’s network interface.
+            # This leads to an error because each container tries to bind the host’s port 2222 directly.
+            # Since you have a single node, only one container can successfully attach to that port.
+            # The second container will fail to bind and repeatedly restart/crash.
+
+    fastapi_single: # single container instance (e.g. for legacy version)
         build: # use the dockerfile in the same dir
             context: .
             dockerfile: Dockerfile 
-        image: fastapi_webserver:latest  # tells Docker Compose what to name (tag) the image after it’s built.
-        ports: 
-            - "2002:3003"  
-                
-        
+        image: fastapi_single:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        environment:
+            - INSTANCE_NAME=fastapi_single 
+        expose:
+            - "3003"
+        # ports: # This publishes the container’s port to the host (e.g., 2002 → 3003). For internal service-to-service communication on the overlay network, this isn’t required.
+        #     - "2001:3003"  
+
+    nginx:
+        image: nginx:latest
+        container_name: nginx_proxy
+        ports:
+        - "80:80"
+        - "443:443"
+        volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        # Mount the certificates directory for SSL
+        - ./certs:/etc/nginx/certs:ro
+        restart: unless-stopped
+
+networks:
+    default:
+        driver: overlay # for all swarm "overlay" network is recommended (mandatory if multiple node setup)
+        attachable: true   # <-- important! Docker allows containers (and the Compose process) to attach to the overlay network, preventing the PermissionDenied error. 
