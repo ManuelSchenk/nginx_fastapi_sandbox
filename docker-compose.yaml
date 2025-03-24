@@ -1,20 +1,27 @@
 
 services:
+
+    # ATTENTION: here we use a replica set with docker SWARM (so dont use docker compose for starting it!)
+    # to make both available you must use `docker stack deploy -c docker-compose.yaml myswarm`
+    
     fastapi_swarm:
-        build: # use the dockerfile in the same dir
+        build: # This is ignored by SWARM but needed to build the images using the dockerfile in the same dir
             context: .
             dockerfile: Dockerfile 
         image: fastapi_swarm:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        hostname: "swarm.{{.Task.Slot}}"  # this replaces the containerID with a meaningfull name
         deploy:
             replicas: 2
             restart_policy:
                 condition: on-failure
-        environment:
-            - INSTANCE_NAME=fastapi_swarm 
-        expose:
-            - "3003" # this is used when nginx is a container in the same docker network, if not use the ports below
+            endpoint_mode: dnsrr # This tells Docker Swarm to use DNS Round Robin, which will return each container's IP address as separate entries. Then NGINX will have multiple endpoints to distribute requests across.
+        
+        # Exposing Ports is NOT needed with SWARM: internal connectivity works automatically
+        # expose:
+        #     - "3003" # this is used when nginx is a container in the same docker network, if not use the ports below
+        
         # the following would exposes the port 2002 on the host (if a local nginx should be used) and routes the traffic to port 3003 inside the containers
-        # ports:
+        # ports: # ports: # This publishes the container’s port to the host (e.g., 2002 → 3003). For internal service-to-service communication on the overlay network, this isn’t required.
         #     - published: 2002
         #       target: 3003
         #       protocol: tcp
@@ -23,28 +30,24 @@ services:
             # Since you have a single node, only one container can successfully attach to that port.
             # The second container will fail to bind and repeatedly restart/crash.
 
-    fastapi_single: # single container instance (e.g. for legacy version)
-        build: # use the dockerfile in the same dir
-            context: .
-            dockerfile: Dockerfile 
-        image: fastapi_single:latest  # tells Docker Compose what to name (tag) the image after it’s built.
-        environment:
-            - INSTANCE_NAME=fastapi_single 
-        expose:
-            - "3003"
-        # ports: # This publishes the container’s port to the host (e.g., 2002 → 3003). For internal service-to-service communication on the overlay network, this isn’t required.
-        #     - "2001:3003"  
+
+    fastapi_single: # additional single container instance (e.g. for legacy version)
+        image: fastapi_swarm:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        hostname: "swarm.single"
+
 
     nginx:
         image: nginx:latest
-        container_name: nginx_proxy
         ports:
         - "80:80"
         - "443:443"
         volumes:
+        # Mount the nginx config file
         - ./nginx.conf:/etc/nginx/nginx.conf:ro
         # Mount the certificates directory for SSL
         - ./certs:/etc/nginx/certs:ro
+        # Mount the password file for basic authentification
+        - ./.htpasswd:/etc/nginx/.htpasswd:ro
         restart: unless-stopped
 
 networks:
