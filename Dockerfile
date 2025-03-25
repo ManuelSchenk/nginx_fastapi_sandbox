@@ -1,4 +1,5 @@
 FROM python:3.10.16-slim-bookworm
+# TODO try out: https://hub.docker.com/r/mwalbeck/python-poetry
 
 # Set working directory
 WORKDIR /app
