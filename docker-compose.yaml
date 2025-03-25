@@ -1,0 +1,65 @@
+
+services:
+
+    # ATTENTION: here we use a replica set with docker SWARM (so dont use docker compose for starting it!)
+    # to make both available you must use `docker stack deploy -c docker-compose.yaml myswarm`
+    
+    # fastapi_swarm: # this is the SWARM!!!
+    #     image: registry/fastapi:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+    #     hostname: "swarm.{{.Task.Slot}}"  # this replaces the containerID with a meaningfull name
+    #     deploy:
+    #       # replicas: 2  # this deploys 2 replicas of this image in docker swarm
+    #       mode: global   # global means it deploy one container on all workers in the swarm (and on the manager node also)
+    #       # placement:   # define by tags which nodes should be used (you must tag them before with `docker node update --label-add target=true <MANAGER_NODE_ID>`)
+    #       #   constraints:
+    #       #     - node.labels.target == true
+    #       restart_policy:
+    #         condition: on-failure
+    #       endpoint_mode: dnsrr  # This tells Docker Swarm to use DNS Round Robin, which will return each container's IP address as separate entries. Then NGINX will have multiple endpoints to distribute requests across.
+    #     # Exposing Ports is NOT needed with SWARM: internal connectivity works automatically
+    #     expose: # i add this informational to see which port must be called
+    #         - "3003"
+    #     networks:
+    #         - swarm-net
+
+    fastapi_single: # additional single container instance as dummy (e.g. for legacy version)
+        image: registry/fastapi:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        hostname: "swarm.single"
+        networks:
+            - swarm-net
+
+    busybox:
+        image: busybox:latest
+        command: tail -f /dev/null
+        networks:
+            - swarm-net
+    # with this you have a container inside the network and you can check ig the registry is available
+    # just attach with `docker exec -it nginx_fastapi_sandbox-busybox-1 sh`
+    # the `ping registry`   --> this works for me but not for pulling images from registry
+
+    # nginx:  # service isn’t using Swarm-specific deploy settings (like placement constraints or global mode), so it will run as usual on the main
+    #     image: nginx:latest
+    #     ports: # This publishes the container’s port to the host. 
+    #         - "80:80"
+    #         - "443:443"
+    #     volumes:
+    #         # Mount the nginx config file
+    #         - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    #         # Mount the certificates directory for SSL
+    #         - ./certs:/etc/nginx/certs:ro
+    #         # Mount the password file for basic authentification
+    #         - ./.htpasswd:/etc/nginx/.htpasswd:ro
+    #     deploy: # docker swarm uses a different restart policy
+    #       restart_policy:
+    #         condition: any
+    #         delay: 5s          # Optional: wait 5 seconds before restarting
+    #         max_attempts: 0    # 0 means unlimited attempts
+    #         window: 120s       # Evaluate the restart policy over a 2-minute window
+    #     networks:
+    #         - swarm-net
+
+networks:
+    swarm-net:
+        external: true
+        # driver: overlay # for all swarm "overlay" network is recommended (mandatory if multiple node setup)
+        # attachable: true   # <-- important! Docker allows containers (and the Compose process) to attach to the overlay network, preventing the PermissionDenied error. 

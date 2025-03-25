@@ -29,12 +29,18 @@ sudo htpasswd -c /etc/nginx/.htpasswd cse2lr
 therefore you have to allow docker to use it with adding the following into your `/etc/docker/daemon.json`:
 ```json
 {
+  "proxies": {
+        ...
+        "no-proxy": "...,registry"
+  },
+  "insecure-registries": ["registry:5000"],
   ...
-  "insecure-registries": ["registry:5000"]
 }
 ```
+Also if you use a local proxy add `registry` into no-proxy!
 Afterwards restart docker: `sudo systemctl restart docker`
 This must be done on all nodes!
+
 
 
 # How to deploy
