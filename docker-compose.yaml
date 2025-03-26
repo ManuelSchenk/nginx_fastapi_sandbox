@@ -4,25 +4,27 @@ services:
     # ATTENTION: here we use a replica set with docker SWARM (so dont use docker compose for starting it!)
     # to make both available you must use `docker stack deploy -c docker-compose.yaml myswarm`
     
+    fastapi_backup: # add a single container instance as backup to avaid nginx to crash when the swarm is down (must be placed above the swarm in this file)
+        image: registry/fastapi:latest  # tells Docker Compose what to name (tag) the image after it’s built.
+        hostname: "swarm.backup"
+        networks:
+            - swarm-net
+
     fastapi_swarm: # this is the SWARM!!!
         image: registry/fastapi:latest  # tells Docker Compose what to name (tag) the image after it’s built.
         hostname: "swarm.{{.Task.Slot}}"  # this replaces the containerID with a meaningfull name
         deploy:
           # replicas: 2  # this deploys 2 replicas of this image in docker swarm
           mode: global   # global means it deploy one container on all workers in the swarm (and on the manager node also)
-          # placement:   # define by tags which nodes should be used (you must tag them before with `docker node update --label-add target=true <MANAGER_NODE_ID>`)
-          #   constraints:
-          #     - node.labels.target == true
+          placement:  
+            constraints:
+            - node.role == worker # tells Swarm to run one instance of the service on every worker node, excluding the manager
+            # to define by tags which nodes should be used (you must tag them before with `docker node update --label-add target=true <MANAGER_NODE_ID>`)
+            # - node.labels.target == true 
           restart_policy:
             condition: on-failure
           endpoint_mode: dnsrr  # This tells Docker Swarm to use DNS Round Robin, which will return each container's IP address as separate entries. Then NGINX will have multiple endpoints to distribute requests across.
         # Exposing Ports is NOT needed with SWARM: internal connectivity works automatically
-        networks:
-            - swarm-net
-
-    fastapi_backup: # additional single container instance as backup to avaid nginx to crash when the swarm is down
-        image: registry/fastapi:latest  # tells Docker Compose what to name (tag) the image after it’s built.
-        hostname: "swarm.backup"
         networks:
             - swarm-net
 

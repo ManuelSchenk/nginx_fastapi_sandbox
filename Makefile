@@ -11,8 +11,8 @@ init: network registry wait build push
 
 # create a overlay network for the swarm
 network:
-	@echo "Creating a overlay network for the swarm..."
-	docker network create --driver=overlay --attachable swarm-net
+	@echo "Creating a overlay network for the swarm (if not allready running)..."
+	@docker network inspect swarm-net >/dev/null 2>&1 || docker network create --driver=overlay --attachable swarm-net
 
 # Start a temporary registry service (the profile is used to avoid duplication of the registry)
 registry:
@@ -21,7 +21,8 @@ registry:
 
 # Wait for the registry to be ready by polling its API
 wait:
-	@echo "Waiting for registry to be ready..."
+	@echo "Waiting for registry to be ready..." 
+# curl http://localhost:5000/v2/_catalog
 	@until curl -s "http://$(REGISTRY)/v2/_catalog" > /dev/null; do \
 		sleep 1; \
 	done
