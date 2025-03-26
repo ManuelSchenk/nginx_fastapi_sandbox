@@ -2,10 +2,12 @@ REGISTRY=localhost:5000
 IMAGE=fastapi
 TAG=latest
 
-.PHONY: all network registry wait build push start_myswarm  # explicitly tell Make they're not associated with files
+.PHONY: all init network registry wait build push stack_deploy  # explicitly tell Make they're not associated with files
 
 # Running "make" will execute the "all" target.
-all: network registry wait build push start_myswarm
+all: init stack_deploy
+# this is needed to start and initalize the registry before starting the swarm
+init: network registry wait build push
 
 # create a overlay network for the swarm
 network:
@@ -15,7 +17,7 @@ network:
 # Start a temporary registry service (the profile is used to avoid duplication of the registry)
 registry:
 	@echo "Starting local temporary docker registry service..."
-	docker compose -f docker-compose_init.yaml up -d
+	docker compose -p myswarm -f docker-compose_init.yaml up -d
 
 # Wait for the registry to be ready by polling its API
 wait:
@@ -44,7 +46,7 @@ push:
 # 	docker compose stop registry
 
 # Start the app service from the registry image
-start_myswarm:
+stack_deploy:
 	@echo "Starting the fastapi swarm with the nginx entry point and registry..."
 	docker stack deploy -c docker-compose.yaml myswarm --detach=false
-# it will not start the registry again because no profile is used 
+# detach=false: wait and stream output until the deployment is complete

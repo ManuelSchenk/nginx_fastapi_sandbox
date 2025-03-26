@@ -59,10 +59,11 @@ docker service ls
 docker service logs --follow myswarm_fastapi_swarm
 docker service inspect myswarm_fastapi_swarm --pretty
 ```
-4) check if its reachable/working with **posting** or `wget --no-check-certificate -q -O - https://manus-swarm.com/health_check` (-q is for quite and -O - suppresses the file output and show it directly on stdout)
-**HINT**: Dont forget to add a basic http auth header (user+pw)
+4) check if its reachable/working with **posting** (Dont forget to add a basic http auth header) or use **wget**:
+`wget --progress=dot:mega --user=your_username --password=your_password--no-check-certificate -O - https://manus-swarm.com/health_check` (-O - suppresses the file output and show it directly on stdout and --progress=dot:mega is needed to show the respond message)
+
 
 # Usage
 
 When the first deployment was successfull and the image of fastapi was pushed to the registry you can start the stack/swarm without the initialisation with:
-`make start_myswarm`
+`make stack_deploy`
