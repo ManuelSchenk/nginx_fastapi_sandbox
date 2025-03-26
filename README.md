@@ -58,6 +58,10 @@ curl http://localhost:5000/v2/_catalog
 docker service ls
 docker service logs --follow myswarm_fastapi_swarm
 docker service inspect myswarm_fastapi_swarm --pretty
+# check nginx live (check if DNS works properly)
+docker exec -it <nginx_container_id> sh
+getent hosts fastapi_swarm
+getent hosts fastapi_backup
 ```
 4) check if its reachable/working with **posting** (Dont forget to add a basic http auth header) or use **wget**:
 `wget --progress=dot:mega --user=your_username --password=your_password--no-check-certificate -O - https://manus-swarm.com/health_check` (-O - suppresses the file output and show it directly on stdout and --progress=dot:mega is needed to show the respond message)

@@ -26,7 +26,9 @@ services:
           endpoint_mode: dnsrr  # This tells Docker Swarm to use DNS Round Robin, which will return each container's IP address as separate entries. Then NGINX will have multiple endpoints to distribute requests across.
         # Exposing Ports is NOT needed with SWARM: internal connectivity works automatically
         networks:
-            - swarm-net
+            swarm-net:
+              aliases:
+                - fastapi_swarm
 
     nginx:  # service isn’t using Swarm-specific deploy settings (like placement constraints or global mode), so it will run as usual on the main
         image: nginx:latest
