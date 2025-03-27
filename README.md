@@ -28,9 +28,9 @@ therefore you have to allow docker to use it with adding the following into your
 {
   "proxies": {
         ...
-        "no-proxy": "...,registry"
+        "no-proxy": "...,IP_of_manager_node"
   },
-  "insecure-registries": ["registry:5000"],
+  "insecure-registries": ["IP_of_manager_node:5000"],
   ...
 }
 ```
