@@ -23,11 +23,17 @@ wait:
 	done
 	@echo "Registry is up!"
 
+init_buildx:
+	@echo "Initializing buildx to be able to build for ARM (Raspi)..."
+	docker buildx use default
+	docker run --rm --privileged tonistiigi/binfmt --install all
+
 # Build your app image for ARM (Raspi) and x64
 build_n_push:
 	@echo "Building the fastapi service image for ARM and x64 and Push it to the regisry..."
 	docker buildx create --use
-	docker buildx build --platform linux/amd64,linux/arm/v7 -t localhost:5000/fastapi:latest --push .
+# docker buildx build --platform linux/amd64,linux/arm/v7 -t localhost:5000/fastapi:latest --push .
+	docker buildx build --platform linux/arm/v7 -t localhost:5000/fastapi_arm:latest --push .
 # switch back to default builder from docker (can check with `docker buildx ls`)
 	docker buildx use default
 
