@@ -1,7 +1,4 @@
 
-
-
-
 # About the Project
 
 This is a sandbox to play around with:
@@ -38,7 +35,7 @@ therefore you have to allow docker to use it with adding the following into your
 }
 ```
 Also if you use a local proxy add `registry` into no-proxy!
-Afterwards restart docker: `sudo systemctl restart docker`
+Afterwards restart docker: `sudo service docker restart`
 This must be done on all nodes!
 
 

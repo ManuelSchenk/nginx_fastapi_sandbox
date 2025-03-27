@@ -16,8 +16,8 @@ def health_check():
 @app.post("/long_running_process")
 def long_runner():
     ic("Long running Process started. The Server is going to be blocked for 5 seconds...")
-    time.sleep(5)  # Block for 60 seconds
-    return {"message": f"API on host (container) {host_name} was blocked for 60 seconds."}
+    time.sleep(5)  # Block for 5 seconds
+    return {"message": f"API on host (container) {host_name} was blocked for 5 seconds."}
 
 if __name__ == "__main__":
     ic("Starting FastAPI server on port 3003...")

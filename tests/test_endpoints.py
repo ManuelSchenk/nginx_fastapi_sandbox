@@ -21,4 +21,4 @@ def test_long_running_process():
     assert response.status_code == 200
 
     data = response.json()
-    assert data == {"message": "Server was blocked for 60 seconds."}
+    assert data == {"message": "Server was blocked for 5 seconds."}
