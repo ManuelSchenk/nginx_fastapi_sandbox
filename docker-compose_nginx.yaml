@@ -22,7 +22,7 @@ services:
             # Mount the password file for basic authentification
             - ./.htpasswd:/etc/nginx/.htpasswd:ro
         restart:
-            - unless-stopped    
+            unless-stopped    
         networks:
             - swarm-net
 

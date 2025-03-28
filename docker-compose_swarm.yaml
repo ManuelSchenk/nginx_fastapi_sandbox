@@ -6,7 +6,7 @@ services:
     # runs only if a remote worker is attatched!
 
     fastapi_swarm: # this is the SWARM!!!
-        image: 192.168.1.1:5000/fastapi:latest  # this will be eval on build time so 192.168.1.1 must be reachable from the machine (here we use the WIN IP but the portproxy will forward it accordingly)
+        image: 192.168.1.1:5000/fastapi_arm:latest  # this will be eval on build time so 192.168.1.1 must be reachable from the machine (here we use the WIN IP but the portproxy will forward it accordingly)
         hostname: "swarm.{{.Task.Slot}}"  # this replaces the containerID with a meaningfull name
         deploy:
           # replicas: 2  # this deploys 2 replicas of this image in docker swarm

@@ -2,12 +2,12 @@ REGISTRY=localhost:5000
 IMAGE=fastapi
 TAG=latest
 
-.PHONY: all init registry wait build_n_push start_swarm attach_nginx # explicitly tell Make they're not associated with files
+.PHONY: all init registry wait build_arm push_arm start_swarm attach_nginx # explicitly tell Make they're not associated with files
 
 # Running "make" will execute the "all" target.
 all: init start_swarm attach_nginx
 # this is needed to start and initalize the registry before starting the swarm
-init: registry wait build_n_push
+init: registry wait build_arm push_arm
 
 # Start a temporary registry service (the profile is used to avoid duplication of the registry)
 registry:
@@ -29,13 +29,18 @@ init_buildx:
 	docker run --rm --privileged tonistiigi/binfmt --install all
 
 # Build your app image for ARM (Raspi) and x64
-build_n_push:
-	@echo "Building the fastapi service image for ARM and x64 and Push it to the regisry..."
-	docker buildx create --use
-# docker buildx build --platform linux/amd64,linux/arm/v7 -t localhost:5000/fastapi:latest --push .
-	docker buildx build --platform linux/arm/v7 -t localhost:5000/fastapi_arm:latest --push .
-# switch back to default builder from docker (can check with `docker buildx ls`)
-	docker buildx use default
+build_arm:
+	@echo "🔨 Building fastapi image for ARM (linux/arm/v7)..."
+	docker buildx build \
+		--platform linux/arm/v7 \
+		-t localhost:5000/fastapi_arm:latest \
+		--load .
+# --load: Load the built image into the docker daemon
+
+# Push it from your images into the registry
+push_arm:
+	@echo "📤 Pushing fastapi_arm:latest to local registry..."
+	docker push localhost:5000/fastapi_arm:latest
 
 # Start the app service from the registry image
 start_swarm:
