@@ -1,0 +1,31 @@
+
+services:
+    fastapi_backup: 
+        # add a single container instance as backup to avaid nginx to crash when the swarm is down 
+        # This is needed to dont use the manager node by the load balancer in production 
+        # (shall only be used in the case no worker is online). This Service must be placed above the swarm in this file!
+        image: localhost:5000/fastapi:latest  # this will be eval on build time so localhost is where its build not inside the container
+        hostname: "swarm.backup"
+        networks:
+            - swarm-net
+
+    nginx:  # service isn’t using Swarm-specific deploy settings (like placement constraints or global mode), so it will run as usual on the main
+        image: nginx:latest
+        ports: # This publishes the container’s port to the host. 
+            - "80:80"
+            - "443:443"
+        volumes:
+            # Mount the nginx config file
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+            # Mount the certificates directory for SSL
+            - ./certs:/etc/nginx/certs:ro
+            # Mount the password file for basic authentification
+            - ./.htpasswd:/etc/nginx/.htpasswd:ro
+        restart:
+            unless-stopped    
+        networks:
+            - swarm-net
+
+networks:
+    swarm-net:  # this will create an overlay network used by docker swarm
+        external: true   # if you wnat to connect to an existing overlay network

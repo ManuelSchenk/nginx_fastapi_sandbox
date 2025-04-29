@@ -1,0 +1,14 @@
+
+services:
+
+    registry:  # local docker registry to handle and store the images
+        image: registry:2
+        volumes:
+        - registry-data:/var/lib/registry
+        ports: 
+        - "5000:5000" # For internal service-to-service communication on the overlay network, this isn’t required. 
+        restart:
+          unless-stopped
+          
+volumes:  # this creates a persistend docker volume
+  registry-data:

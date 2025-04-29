@@ -2,52 +2,52 @@ REGISTRY=localhost:5000
 IMAGE=fastapi
 TAG=latest
 
-.PHONY: all init network registry wait build push stack_deploy  # explicitly tell Make they're not associated with files
+.PHONY: all init registry wait build_arm push_arm start_swarm attach_nginx # explicitly tell Make they're not associated with files
 
 # Running "make" will execute the "all" target.
-all: init stack_deploy
+all: init start_swarm attach_nginx
 # this is needed to start and initalize the registry before starting the swarm
-init: network registry wait build push
-
-# create a overlay network for the swarm
-network:
-	@echo "Creating a overlay network for the swarm (if not allready running)..."
-	@docker network inspect swarm-net >/dev/null 2>&1 || docker network create --driver=overlay --attachable swarm-net
+init: registry wait build_arm push_arm
 
 # Start a temporary registry service (the profile is used to avoid duplication of the registry)
 registry:
 	@echo "Starting local temporary docker registry service..."
-	docker compose -p myswarm -f docker-compose_init.yaml up -d
+	docker compose -p myswarm -f docker-compose_registry.yaml up -d
 
 # Wait for the registry to be ready by polling its API
 wait:
 	@echo "Waiting for registry to be ready..." 
-# curl http://localhost:5000/v2/_catalog
+# curl http://localhost:5000/v2/_catalog (but you have to wait till registry is up)
 	@until curl -s "http://$(REGISTRY)/v2/_catalog" > /dev/null; do \
 		sleep 1; \
 	done
 	@echo "Registry is up!"
 
-# Build your app image
-build:
-	@echo "Building the fastapi service image..."
-	docker build -t $(IMAGE):$(TAG) .
+init_buildx:
+	@echo "Initializing buildx to be able to build for ARM (Raspi)..."
+	docker buildx use default
+	docker run --rm --privileged tonistiigi/binfmt --install all
 
-# Tag and push the built image to the local registry
-push:
-	@echo "Tagging and pushing the image..."
-	docker tag $(IMAGE):$(TAG) $(REGISTRY)/$(IMAGE):$(TAG)
-# docker tag fastapi:latest registry/fastapi:latest
-	docker push $(REGISTRY)/$(IMAGE):$(TAG)
-# docker push localhost:5000/fastapi:latest
+# Build your app image for ARM (Raspi) and x64
+build_arm:
+	@echo "🔨 Building fastapi image for ARM (linux/arm/v7)..."
+	docker buildx build \
+		--platform linux/arm/v7 \
+		-t localhost:5000/fastapi_arm:latest \
+		--load .
+# --load: Load the built image into the docker daemon
 
-# Stop the temporary registry container after pushing the image
-# stop_registry:
-# 	@echo "Stopping the temporary local registry service..."
-# 	docker compose stop registry
+# Push it from your images into the registry
+push_arm:
+	@echo "📤 Pushing fastapi_arm:latest to local registry..."
+	docker push localhost:5000/fastapi_arm:latest
 
 # Start the app service from the registry image
-stack_deploy:
+start_swarm:
 	@echo "Starting the fastapi swarm with the nginx entry point and registry..."
-	docker stack deploy -c docker-compose.yaml myswarm --detach=false
-# detach=false: wait and stream output until the deployment is complete
+	docker stack deploy -c docker-compose_swarm.yaml myswarm --detach=false
+# detach=false: means wait and stream output until the deployment is complete
+
+attach_nginx:
+	@echo "Starting NGINX reverse proxy with SSL Termination and basic AUTH..."
+	docker compose -p myswarm -f docker-compose_nginx.yaml up -d
