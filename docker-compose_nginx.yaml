@@ -12,7 +12,7 @@ services:
     nginx:  # service isn’t using Swarm-specific deploy settings (like placement constraints or global mode), so it will run as usual on the main
         image: nginx:latest
         ports: # This publishes the container’s port to the host. 
-            - "80:80"
+            # - "80:80"
             - "443:443"
         volumes:
             # Mount the nginx config file

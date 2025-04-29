@@ -9,6 +9,15 @@ services:
         - "5000:5000" # For internal service-to-service communication on the overlay network, this isn’t required. 
         restart:
           unless-stopped
+        networks:                # attach the service
+          - swarm-net
           
 volumes:  # this creates a persistend docker volume
   registry-data:
+
+networks:
+    swarm-net:  # this will create an overlay network used by docker swarm
+        # external: true   # if you wnat to connect to an existing overlay network
+        name: swarm-net  # with this the name of the network is setted
+        driver: overlay # for all swarm "overlay" network is recommended (mandatory if multiple node setup)
+        attachable: true   # <-- important! Docker allows containers (and the Compose process) to attach to the overlay network, preventing the PermissionDenied error. 

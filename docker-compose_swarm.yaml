@@ -27,7 +27,4 @@ services:
 
 networks:
     swarm-net:  # this will create an overlay network used by docker swarm
-        # external: true   # if you wnat to connect to an existing overlay network
-        name: swarm-net  # with this the name of the network is setted
-        driver: overlay # for all swarm "overlay" network is recommended (mandatory if multiple node setup)
-        attachable: true   # <-- important! Docker allows containers (and the Compose process) to attach to the overlay network, preventing the PermissionDenied error. 
+        external: true   # if you wnat to connect to an existing overlay network
